@@ -188,7 +188,10 @@ class Nutricionista(models.Model):
     
     def save(self, *args, **kwargs):
         """Ejecutar validaciones antes de guardar"""
-        self.full_clean()
+        # Solo ejecutar validación completa si no es una actualización parcial
+        if not kwargs.get('update_fields') and self.pk is None:
+            # Solo validar en creación, no en actualizaciones
+            self.full_clean()
         super().save(*args, **kwargs)
 
 
@@ -198,12 +201,37 @@ class Genero(models.TextChoices):
     OTRO = "O", "Otro"
 
 
+class Administrador(models.Model):
+    """Perfil de administrador del sistema"""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name="administrador"
+    )
+    nombre = models.CharField("nombre", max_length=150, blank=True)
+    apellido = models.CharField("apellido", max_length=150, blank=True)
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    foto_perfil = models.ImageField(upload_to="perfil/", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "administrador"
+        verbose_name_plural = "administradores"
+
+    def __str__(self):
+        return self.full_name or self.user.email
+
+    @property
+    def full_name(self):
+        """Retorna el nombre completo del administrador"""
+        return f"{self.nombre} {self.apellido}".strip()
+
+
 class Paciente(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="paciente")
     nombre = models.CharField(max_length=100, blank=True)
     apellido = models.CharField(max_length=100, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
-    genero = models.CharField(max_length=1, choices=Genero.choices)
+    genero = models.CharField(max_length=1, choices=Genero.choices, blank=True)
     telefono = models.CharField(max_length=20, blank=True, null=True)
     foto_perfil = models.ImageField(upload_to="perfil/", null=True, blank=True)
 
@@ -231,7 +259,10 @@ class Paciente(models.Model):
     
     def save(self, *args, **kwargs):
         """Ejecutar validaciones antes de guardar"""
-        self.full_clean()
+        # Solo ejecutar validación completa si no es una actualización parcial
+        if not kwargs.get('update_fields') and self.pk is None:
+            # Solo validar en creación, no en actualizaciones
+            self.full_clean()
         super().save(*args, **kwargs)
 
     # --- AÑADIDO ---

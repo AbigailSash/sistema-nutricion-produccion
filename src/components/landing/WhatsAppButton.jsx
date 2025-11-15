@@ -1,7 +1,17 @@
-function WhatsAppButton() {
-    const whatsappNumber = "3704209675";
-    const message = "Hola Lic. Olmedo, quiero saber más sobre las consultas nutricionales";
+function WhatsAppButton({ phone, message: customMessage }) {
+    // Número por defecto si no se proporciona uno
+    const whatsappNumber = phone ? phone.replace(/[^0-9]/g, '') : "3704209675";
+    
+    // Mensaje por defecto si no se proporciona uno
+    const defaultMessage = "Hola, quiero saber más sobre las consultas nutricionales";
+    const message = customMessage || defaultMessage;
+    
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+    // Si no hay teléfono, no mostrar el botón
+    if (!phone && !whatsappNumber) {
+        return null;
+    }
 
     return (
         <a 

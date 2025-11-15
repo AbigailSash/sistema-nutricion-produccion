@@ -16,6 +16,7 @@ from .serializers import (
     NutricionistaListSerializer,
     NutricionistaUpdateSerializer,
     PacienteUpdateSerializer,  # Agregar el nuevo serializer
+    AdministradorUpdateSerializer,
 )
 # --- LIMPIEZA: Imports duplicados eliminados ---
 # from .models import Especialidad
@@ -37,7 +38,7 @@ from .serializers import (
 )
 
 from rest_framework.permissions import IsAuthenticated
-from .models import Paciente, AsignacionNutricionistaPaciente
+from .models import Paciente, AsignacionNutricionistaPaciente, Administrador
 from .serializers import PacienteListSerializer
 from rest_framework.generics import RetrieveAPIView
 from .models import Paciente
@@ -149,6 +150,24 @@ class PacienteProfileView(generics.RetrieveUpdateAPIView):
         instance = self.get_object()
         if not instance:
             return Response({"detail": "Perfil de paciente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class AdministradorProfileView(generics.RetrieveUpdateAPIView):
+    """GET, PATCH /api/user/administrador/me/"""
+    serializer_class = AdministradorUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        # Devuelve el perfil del administrador logueado
+        return getattr(self.request.user, 'administrador', None)
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not instance:
+            return Response({"detail": "Perfil de administrador no encontrado."}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 

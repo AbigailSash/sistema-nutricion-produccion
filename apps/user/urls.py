@@ -6,6 +6,7 @@ from .views import (
     NutricionistaAltaView,
     NutricionistaProfileView,
     PacienteProfileView,  # Agregar la nueva vista
+    AdministradorProfileView,
     EspecialidadListView,
     marcar_password_cambiada,
     csrf_cookie_view,
@@ -78,6 +79,7 @@ urlpatterns = [
     path("consultas/", ConsultasPacienteListView.as_view()),
     path("nutricionistas/me/", NutricionistaProfileView.as_view()),
     path("nutricionistas/", NutricionistaAltaView.as_view()),
+    path("administrador/me/", AdministradorProfileView.as_view()),  # Endpoint para perfil del administrador
     path("especialidades/", EspecialidadListView.as_view()),
     path("me/password_changed/", marcar_password_cambiada),
     path("csrf-cookie/", csrf_cookie_view),

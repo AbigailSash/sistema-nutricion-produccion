@@ -5,6 +5,7 @@ import SidebarAdmin from '../../components/navigation/sidebars/SidebarAdmin';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, logoutServer, fetchMe } from '../../features/auth/authSlice';
+import Logo from '../../components/common/Logo';
 
 export default function AdminLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -91,11 +92,8 @@ export default function AdminLayout() {
 
                     <div className="h-0 flex-1 overflow-y-auto pt-5 pb-4">
                     <div className="flex flex-shrink-0 items-center px-4">
-                        <img
-                        className="h-8 w-auto"
-                        src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-                        alt="Your Company"
-                        />
+                        <Logo className="h-10 w-10" showText={false} />
+                        <span className="ml-3 text-xl font-bold text-green-600">NutriSalud</span>
                     </div>
                     <nav className="mt-5 space-y-1 px-2">
                         <SidebarAdmin />
@@ -118,11 +116,8 @@ export default function AdminLayout() {
             <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
                 <div className="flex flex-shrink-0 items-center px-4">
-                <img
-                    className="h-8 w-auto"
-                    src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-                    alt="Your Company"
-                />
+                <Logo className="h-10 w-10" showText={false} />
+                <span className="ml-3 text-xl font-bold text-green-600">NutriSalud</span>
                 </div>
                 <nav className="mt-5 flex-1 space-y-1 bg-white px-2">
                 <SidebarAdmin />

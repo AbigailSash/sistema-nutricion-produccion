@@ -14,8 +14,10 @@ from .models import (
     Paciente, AsignacionNutricionistaPaciente,
     Consulta, TipoConsulta,
     PlanAlimentario, AsignacionPlanAlimentario,
+    Administrador,
 )
 from .utils import normalize_respuestas
+from .utils_image import optimize_profile_picture, validate_image
 
 
 # ---------------------------------------------------------------------
@@ -84,9 +86,16 @@ class NutricionistaUpdateSerializer(serializers.ModelSerializer):
     """
     Serializador para que un nutricionista actualice su propio perfil.
     """
+    foto_perfil = serializers.ImageField(required=False, allow_null=True)
+    # Hacer todos los campos opcionales para permitir actualizaciones parciales
+    nombre = serializers.CharField(required=False)
+    apellido = serializers.CharField(required=False)
+    matricula = serializers.CharField(required=False)
+    telefono = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
     class Meta:
         model = Nutricionista
-        fields = ('nombre', 'apellido', 'matricula', 'telefono')
+        fields = ('nombre', 'apellido', 'matricula', 'telefono', 'foto_perfil')
 
     def validate_matricula(self, value):
         # Opcional: asegurar que la matrícula no esté ya en uso por OTRO nutricionista
@@ -94,6 +103,26 @@ class NutricionistaUpdateSerializer(serializers.ModelSerializer):
             if Nutricionista.objects.filter(matricula=value).exclude(pk=self.instance.pk).exists():
                 raise serializers.ValidationError("Esta matrícula ya está en uso por otro nutricionista.")
         return value
+    
+    def validate_foto_perfil(self, value):
+        """Validar la imagen de perfil"""
+        if value:
+            is_valid, error_msg = validate_image(value, max_size_mb=5)
+            if not is_valid:
+                raise serializers.ValidationError(error_msg)
+        return value
+    
+    def update(self, instance, validated_data):
+        """Actualizar con optimización de imagen"""
+        # Procesar foto de perfil si se proporciona
+        foto_perfil = validated_data.get('foto_perfil')
+        if foto_perfil:
+            # Optimizar la imagen
+            optimized = optimize_profile_picture(foto_perfil)
+            if optimized:
+                validated_data['foto_perfil'] = optimized
+        
+        return super().update(instance, validated_data)
 
 
 class PacienteSerializer(serializers.ModelSerializer):
@@ -109,15 +138,87 @@ class PacienteUpdateSerializer(serializers.ModelSerializer):
     """
     Serializador para que un paciente actualice su propio perfil.
     """
+    foto_perfil = serializers.ImageField(required=False, allow_null=True)
+    # Hacer todos los campos opcionales para permitir actualizaciones parciales
+    nombre = serializers.CharField(required=False)
+    apellido = serializers.CharField(required=False)
+    fecha_nacimiento = serializers.DateField(required=False, allow_null=True)
+    genero = serializers.CharField(required=False)
+    telefono = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
     class Meta:
         model = Paciente
-        fields = ('nombre', 'apellido', 'fecha_nacimiento', 'genero', 'telefono')
+        fields = ('nombre', 'apellido', 'fecha_nacimiento', 'genero', 'telefono', 'foto_perfil')
 
     def validate_fecha_nacimiento(self, value):
         """Validar que la fecha de nacimiento sea en el pasado"""
         if value and value > date.today():
             raise serializers.ValidationError("La fecha de nacimiento no puede ser en el futuro.")
         return value
+    
+    def validate_foto_perfil(self, value):
+        """Validar la imagen de perfil"""
+        if value:
+            is_valid, error_msg = validate_image(value, max_size_mb=5)
+            if not is_valid:
+                raise serializers.ValidationError(error_msg)
+        return value
+    
+    def update(self, instance, validated_data):
+        """Actualizar con optimización de imagen"""
+        # Procesar foto de perfil si se proporciona
+        foto_perfil = validated_data.get('foto_perfil')
+        if foto_perfil:
+            # Optimizar la imagen
+            optimized = optimize_profile_picture(foto_perfil)
+            if optimized:
+                validated_data['foto_perfil'] = optimized
+        
+        return super().update(instance, validated_data)
+
+
+class AdministradorSerializer(serializers.ModelSerializer):
+    """
+    Serializador para el perfil de Administrador (usado para anidar)
+    """
+    class Meta:
+        model = Administrador
+        fields = ('id', 'nombre', 'apellido', 'telefono', 'foto_perfil')
+
+
+class AdministradorUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializador para que un administrador actualice su propio perfil.
+    """
+    foto_perfil = serializers.ImageField(required=False, allow_null=True)
+    # Hacer todos los campos opcionales para permitir actualizaciones parciales
+    nombre = serializers.CharField(required=False)
+    apellido = serializers.CharField(required=False)
+    telefono = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
+    class Meta:
+        model = Administrador
+        fields = ('nombre', 'apellido', 'telefono', 'foto_perfil')
+    
+    def validate_foto_perfil(self, value):
+        """Validar la imagen de perfil"""
+        if value:
+            is_valid, error_msg = validate_image(value, max_size_mb=5)
+            if not is_valid:
+                raise serializers.ValidationError(error_msg)
+        return value
+    
+    def update(self, instance, validated_data):
+        """Actualizar con optimización de imagen"""
+        # Procesar foto de perfil si se proporciona
+        foto_perfil = validated_data.get('foto_perfil')
+        if foto_perfil:
+            # Optimizar la imagen
+            optimized = optimize_profile_picture(foto_perfil)
+            if optimized:
+                validated_data['foto_perfil'] = optimized
+        
+        return super().update(instance, validated_data)
 
 
 class UserCreateSerializer(BaseCreate):

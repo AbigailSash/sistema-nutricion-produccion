@@ -68,7 +68,7 @@ export default function PreguntasPage() {
             <div className="flex items-center justify-between mb-4">
                 <h1 className="text-xl font-semibold text-gray-800">Banco de preguntas</h1>
                 <div className="flex gap-2">
-                    <Link to="/panel/nutri/plantillas/crear" className="px-3 py-2 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Gestionar plantillas</Link>
+                    <Link to="/panel/nutri/plantillas" className="px-3 py-2 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Gestionar plantillas</Link>
                     <button onClick={() => navigate('/panel/nutri/preguntas/crear')} className="px-3 py-2 text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-700">Nueva pregunta</button>
                 </div>
             </div>

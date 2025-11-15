@@ -4,45 +4,38 @@ import api from '../../api/client';
 import { fetchMe } from '../../features/auth/authSlice';
 import { googleLogout, useGoogleLogin } from '@react-oauth/google';
 import FotoPerfilModal from '../common/FotoPerfilModal';
-import { toast } from 'react-toastify';
 
-function ConfiguracionAdmin() {
+function ConfiguracionPaciente() {
     const dispatch = useDispatch();
     const { user } = useSelector(state => state.auth);
-    const [adminProfile, setAdminProfile] = useState(null);
     const [formData, setFormData] = useState({
         nombre: '',
         apellido: '',
+        fecha_nacimiento: '',
+        genero: '',
         telefono: '',
     });
     const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [linkingStatus, setLinkingStatus] = useState('idle');
     const [linkingError, setLinkingError] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
 
-    // Cargar perfil de administrador
     useEffect(() => {
-        const fetchAdminProfile = async () => {
-            try {
-                const response = await api.get('/api/user/administrador/me/');
-                if (response.status === 200) {
-                    setAdminProfile(response.data);
-                    setFormData({
-                        nombre: response.data.nombre || '',
-                        apellido: response.data.apellido || '',
-                        telefono: response.data.telefono || '',
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching admin profile:', error);
-            }
-        };
-        
-        if (user) {
-            dispatch(fetchMe());
-            fetchAdminProfile();
+        dispatch(fetchMe());
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (user && user.paciente) {
+            setFormData({
+                nombre: user.paciente.nombre || '',
+                apellido: user.paciente.apellido || '',
+                fecha_nacimiento: user.paciente.fecha_nacimiento || '',
+                genero: user.paciente.genero || '',
+                telefono: user.paciente.telefono || '',
+            });
         }
-    }, [dispatch, user]);
+    }, [user]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -54,33 +47,21 @@ function ConfiguracionAdmin() {
             const data = new FormData();
             data.append('foto_perfil', file);
 
-            const response = await api.patch('/api/user/administrador/me/', data, {
+            const response = await api.patch('/api/user/pacientes/me/', data, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-
+            
             if (response.status === 200) {
-                setAdminProfile(response.data);
+                dispatch(fetchMe());
                 setIsPhotoModalOpen(false);
-                toast.success('✨ Foto de perfil actualizada con éxito', {
-                    position: "top-right",
-                    autoClose: 3000,
-                });
-            } else {
-                const errorData = response.data || {};
-                toast.error(`Error al actualizar: ${JSON.stringify(errorData)}`, {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
+                alert('Foto de perfil actualizada con éxito.');
             }
         } catch (error) {
-            console.error('Error updating photo:', error);
+            console.error('Error uploading photo:', error);
             const errorMessage = error.response?.data ? JSON.stringify(error.response.data) : error.message;
-            toast.error(`Ocurrió un error al actualizar la foto: ${errorMessage}`, {
-                position: "top-right",
-                autoClose: 5000,
-            });
+            throw new Error(`Error al subir la foto: ${errorMessage}`);
         } finally {
             setUploadingPhoto(false);
         }
@@ -88,28 +69,31 @@ function ConfiguracionAdmin() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsSaving(true);
         try {
-            const response = await api.patch('/api/user/administrador/me/', formData);
+            const data = {
+                nombre: formData.nombre,
+                apellido: formData.apellido,
+                fecha_nacimiento: formData.fecha_nacimiento,
+                genero: formData.genero,
+                telefono: formData.telefono,
+            };
+
+            const response = await api.patch('/api/user/pacientes/me/', data);
+            
             if (response.status === 200) {
-                setAdminProfile(response.data);
-                toast.success('✅ Perfil actualizado correctamente', {
-                    position: "top-right",
-                    autoClose: 3000,
-                });
+                dispatch(fetchMe());
+                alert('Perfil actualizado con éxito.');
             } else {
                 const errorData = response.data || {};
-                toast.error(`Error al actualizar: ${JSON.stringify(errorData)}`, {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
+                alert(`Error al actualizar: ${JSON.stringify(errorData)}`);
             }
         } catch (error) {
             console.error('Error updating profile:', error);
             const errorMessage = error.response?.data ? JSON.stringify(error.response.data) : error.message;
-            toast.error(`Ocurrió un error al actualizar el perfil: ${errorMessage}`, {
-                position: "top-right",
-                autoClose: 5000,
-            });
+            alert(`Ocurrió un error al actualizar el perfil: ${errorMessage}`);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -127,14 +111,14 @@ function ConfiguracionAdmin() {
             if (response.status === 200) {
                 dispatch(fetchMe());
                 setLinkingStatus('success');
-                toast.success(response.data.message || 'Cuenta de Google vinculada con éxito');
+                alert(response.data.message || 'Cuenta de Google vinculada con éxito.');
             }
         } catch (error) {
             console.error('Error linking Google account:', error);
             setLinkingStatus('failed');
             const errorMsg = error.response?.data?.error || error.message || 'Error al vincular cuenta de Google';
             setLinkingError(errorMsg);
-            toast.error(errorMsg);
+            alert(errorMsg);
         }
     };
 
@@ -144,7 +128,7 @@ function ConfiguracionAdmin() {
             console.error("Google Sign-In Error during linking:", error);
             setLinkingStatus('failed');
             setLinkingError('Hubo un problema con la autenticación de Google.');
-            toast.error('Hubo un problema con la autenticación de Google');
+            alert('Hubo un problema con la autenticación de Google.');
         }
     });
 
@@ -154,23 +138,26 @@ function ConfiguracionAdmin() {
             googleLogin();
         } catch (error) {
             console.error('Error al llamar googleLogin:', error);
-            toast.error('Error al iniciar el proceso de vinculación');
+            alert('Error al iniciar el proceso de vinculación');
         }
     };
 
     const handleUnlinkGoogle = async () => {
         try {
             const response = await api.post('/api/user/disconnect/google-oauth2/');
+
             if (response.status === 200) {
                 googleLogout();
                 dispatch(fetchMe());
-                toast.success('Cuenta de Google desvinculada con éxito');
+                alert('Cuenta de Google desvinculada con éxito.');
             } else {
-                toast.error(`Error al desvincular: ${JSON.stringify(response.data || {})}`);
+                const errorData = response.data || {};
+                alert(`Error al desvincular: ${JSON.stringify(errorData)}`);
             }
         } catch (error) {
             console.error('Error during Google account disconnection:', error);
-            toast.error(`Ocurrió un error: ${error.response?.data ? JSON.stringify(error.response.data) : error.message}`);
+            const errorMessage = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+            alert(`Ocurrió un error al intentar desvincular la cuenta: ${errorMessage}`);
         }
     };
 
@@ -183,7 +170,7 @@ function ConfiguracionAdmin() {
                 isOpen={isPhotoModalOpen}
                 onClose={() => setIsPhotoModalOpen(false)}
                 onSave={handlePhotoSave}
-                currentPhoto={adminProfile?.foto_perfil}
+                currentPhoto={user?.paciente?.foto_perfil}
                 uploading={uploadingPhoto}
             />
 
@@ -191,12 +178,13 @@ function ConfiguracionAdmin() {
             <div className="p-6 bg-white shadow-md rounded-lg">
                 <h2 className="text-2xl font-bold mb-4">Foto de Perfil</h2>
                 <div className="flex items-center space-x-6">
+                    {/* Preview de la foto */}
                     <div className="relative">
-                        {adminProfile?.foto_perfil ? (
+                        {user?.paciente?.foto_perfil ? (
                             <img
-                                src={adminProfile.foto_perfil}
+                                src={user.paciente.foto_perfil}
                                 alt="Foto de perfil"
-                                className="w-32 h-32 rounded-full object-cover border-4 border-green-500"
+                                className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
                             />
                         ) : (
                             <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
@@ -206,13 +194,15 @@ function ConfiguracionAdmin() {
                             </div>
                         )}
                     </div>
+                    
+                    {/* Controles */}
                     <div className="flex-1">
                         <button
                             type="button"
                             onClick={() => setIsPhotoModalOpen(true)}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
                         >
-                            {adminProfile?.foto_perfil ? 'Cambiar foto' : 'Subir foto'}
+                            {user?.paciente?.foto_perfil ? 'Cambiar foto' : 'Subir foto'}
                         </button>
                         <p className="text-sm text-gray-500 mt-2">
                             JPG, PNG o GIF (máx. 5MB)
@@ -221,7 +211,7 @@ function ConfiguracionAdmin() {
                 </div>
             </div>
 
-            {/* Formulario de Información Personal */}
+            {/* Formulario de Información Personal */
             <div className="p-6 bg-white shadow-md rounded-lg">
                 <h2 className="text-2xl font-bold mb-4">Información Personal</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -233,8 +223,9 @@ function ConfiguracionAdmin() {
                                 name="nombre" 
                                 id="nombre" 
                                 value={formData.nombre} 
-                                onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" 
+                                onChange={handleChange} 
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+                                required
                             />
                         </div>
                         <div>
@@ -244,19 +235,59 @@ function ConfiguracionAdmin() {
                                 name="apellido" 
                                 id="apellido" 
                                 value={formData.apellido} 
-                                onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" 
+                                onChange={handleChange} 
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+                                required
                             />
+                        </div>
+                        <div>
+                            <label htmlFor="fecha_nacimiento" className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
+                            <input 
+                                type="date" 
+                                name="fecha_nacimiento" 
+                                id="fecha_nacimiento" 
+                                value={formData.fecha_nacimiento} 
+                                onChange={handleChange} 
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="genero" className="block text-sm font-medium text-gray-700">Género</label>
+                            <select 
+                                name="genero" 
+                                id="genero" 
+                                value={formData.genero} 
+                                onChange={handleChange} 
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                required
+                            >
+                                <option value="">Seleccionar...</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                                <option value="O">Otro</option>
+                            </select>
                         </div>
                         <div>
                             <label htmlFor="telefono" className="block text-sm font-medium text-gray-700">Teléfono</label>
                             <input 
-                                type="text" 
+                                type="tel" 
                                 name="telefono" 
                                 id="telefono" 
                                 value={formData.telefono} 
-                                onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" 
+                                onChange={handleChange} 
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+                                placeholder="+54 9 11 xxxx-xxxx"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="dni" className="block text-sm font-medium text-gray-700">DNI</label>
+                            <input 
+                                type="text" 
+                                name="dni" 
+                                id="dni" 
+                                value={user?.dni || ''} 
+                                readOnly 
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 sm:text-sm" 
                             />
                         </div>
                         <div>
@@ -272,11 +303,12 @@ function ConfiguracionAdmin() {
                         </div>
                     </div>
                     <div className="flex justify-end">
-                        <button
-                            type="submit"
-                            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
+                        <button 
+                            type="submit" 
+                            disabled={isSaving}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
                         >
-                            Guardar Cambios
+                            {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
                     </div>
                 </form>
@@ -307,31 +339,38 @@ function ConfiguracionAdmin() {
                         ) : (
                             <button
                                 onClick={handleLinkGoogle}
-                                disabled={linkingStatus === 'loading'}
-                                className={`px-4 py-2 text-white rounded ${
-                                    linkingStatus === 'loading' 
-                                        ? 'bg-gray-400 cursor-not-allowed' 
-                                        : 'bg-blue-500 hover:bg-blue-600'
-                                }`}
+                                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                             >
-                                {linkingStatus === 'loading' ? 'Vinculando...' : 'Vincular cuenta de Google'}
+                                Vincular cuenta de Google
                             </button>
                         )}
                     </div>
-                    {linkingError && (
-                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
-                            <p className="text-sm text-red-600">{linkingError}</p>
-                        </div>
-                    )}
-                    {linkingStatus === 'success' && (
-                        <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
-                            <p className="text-sm text-green-600">¡Cuenta vinculada exitosamente!</p>
-                        </div>
-                    )}
                 </div>
             </div>
+
+            {/* Información del Nutricionista Asignado */}
+            {user?.nutricionista_id && (
+                <div className="p-6 bg-white shadow-md rounded-lg">
+                    <h2 className="text-2xl font-bold mb-4">Mi Nutricionista</h2>
+                    <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                            <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-gray-900">
+                                Tienes un nutricionista asignado
+                            </p>
+                            <p className="text-sm text-gray-500">
+                                Puedes agendar turnos y recibir seguimiento personalizado
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
-export default ConfiguracionAdmin;
+export default ConfiguracionPaciente;

@@ -1,6 +1,7 @@
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import Logo from '../common/Logo';
 
 function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -18,10 +19,8 @@ function Navbar() {
                     {/* Logo */}
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center">
-                            <div className="w-10 h-10 rounded flex items-center justify-center mr-3" style={{backgroundColor: '#9575cd'}}>
-                                <span className="text-white font-bold text-sm">N</span>
-                            </div>
-                            <span className="text-xl font-bold text-gray-800">
+                            <Logo className="h-10 w-10" showText={false} />
+                            <span className="ml-3 text-xl font-bold text-green-600">
                                 NutriSalud
                             </span>
                         </Link>
@@ -29,23 +28,26 @@ function Navbar() {
                     
                     {/* Desktop Menu */}
                     <div className="hidden md:flex items-center space-x-6">
-                        <a href="#servicios" className="text-gray-700 transition-colors" style={{'--hover-color': '#9575cd'}} onMouseEnter={e => e.target.style.color = '#9575cd'} onMouseLeave={e => e.target.style.color = '#374151'}>
+                        <a href="#servicios" className="text-gray-700 transition-colors" style={{'--hover-color': '#10B981'}} onMouseEnter={e => e.target.style.color = '#10B981'} onMouseLeave={e => e.target.style.color = '#374151'}>
                             Servicios
                         </a>
-                        <a href="#beneficios" className="text-gray-700 transition-colors" onMouseEnter={e => e.target.style.color = '#9575cd'} onMouseLeave={e => e.target.style.color = '#374151'}>
+                        <a href="#beneficios" className="text-gray-700 transition-colors" onMouseEnter={e => e.target.style.color = '#10B981'} onMouseLeave={e => e.target.style.color = '#374151'}>
                             Beneficios
                         </a>
-                        <a href="#testimonios" className="text-gray-700 transition-colors" onMouseEnter={e => e.target.style.color = '#9575cd'} onMouseLeave={e => e.target.style.color = '#374151'}>
+                        <a href="#nutricionistas" className="text-gray-700 transition-colors" onMouseEnter={e => e.target.style.color = '#10B981'} onMouseLeave={e => e.target.style.color = '#374151'}>
+                            Nutricionistas
+                        </a>
+                        <a href="#testimonios" className="text-gray-700 transition-colors" onMouseEnter={e => e.target.style.color = '#10B981'} onMouseLeave={e => e.target.style.color = '#374151'}>
                             Testimonios
                         </a>
                         <Link
-                            to="/auth/login"
+                            to="/login"
                             className="text-white px-4 py-2 rounded font-medium transition-colors"
-                            style={{backgroundColor: '#b39ddb'}}
-                            onMouseEnter={e => e.target.style.backgroundColor = '#9575cd'}
-                            onMouseLeave={e => e.target.style.backgroundColor = '#b39ddb'}
+                            style={{backgroundColor: '#10B981'}}
+                            onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
+                            onMouseLeave={e => e.target.style.backgroundColor = '#10B981'}
                         >
-                            Login
+                            Iniciar Sesión
                         </Link>
                         
                         {/* Dark mode toggle */}
@@ -95,30 +97,39 @@ function Navbar() {
                             <a
                                 href="#beneficios"
                                 className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
-                                onMouseEnter={e => e.target.style.color = '#9575cd'}
+                                onMouseEnter={e => e.target.style.color = '#10B981'}
                                 onMouseLeave={e => e.target.style.color = '#374151'}
                                 onClick={() => setIsOpen(false)}
                             >
                                 Beneficios
                             </a>
                             <a
+                                href="#nutricionistas"
+                                className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                                onMouseEnter={e => e.target.style.color = '#10B981'}
+                                onMouseLeave={e => e.target.style.color = '#374151'}
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Nutricionistas
+                            </a>
+                            <a
                                 href="#testimonios"
                                 className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
-                                onMouseEnter={e => e.target.style.color = '#9575cd'}
+                                onMouseEnter={e => e.target.style.color = '#10B981'}
                                 onMouseLeave={e => e.target.style.color = '#374151'}
                                 onClick={() => setIsOpen(false)}
                             >
                                 Testimonios
                             </a>
                             <Link
-                                to="/auth/login"
+                                to="/login"
                                 className="block w-full text-center text-white px-4 py-2 rounded font-semibold transition-colors mt-4"
-                                style={{backgroundColor: '#b39ddb'}}
-                                onMouseEnter={e => e.target.style.backgroundColor = '#9575cd'}
-                                onMouseLeave={e => e.target.style.backgroundColor = '#b39ddb'}
+                                style={{backgroundColor: '#10B981'}}
+                                onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
+                                onMouseLeave={e => e.target.style.backgroundColor = '#10B981'}
                                 onClick={() => setIsOpen(false)}
                             >
-                                Login
+                                Iniciar Sesión
                             </Link>
                         </div>
                     </div>

@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import api from '../../api/client';
 import { fetchMe } from '../../features/auth/authSlice';
 import { googleLogout, useGoogleLogin } from '@react-oauth/google';
+import FotoPerfilModal from '../common/FotoPerfilModal';
+import { toast } from 'react-toastify';
 
 function ConfiguracionPaciente() {
     const dispatch = useDispatch();
@@ -14,6 +16,8 @@ function ConfiguracionPaciente() {
         genero: '',
         telefono: '',
     });
+    const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [linkingStatus, setLinkingStatus] = useState('idle');
     const [linkingError, setLinkingError] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -38,22 +42,69 @@ function ConfiguracionPaciente() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handlePhotoSave = async (file) => {
+        setUploadingPhoto(true);
+        try {
+            const data = new FormData();
+            data.append('foto_perfil', file);
+
+            const response = await api.patch('/api/user/pacientes/me/', data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            
+            if (response.status === 200) {
+                dispatch(fetchMe());
+                setIsPhotoModalOpen(false);
+                toast.success('✨ Foto de perfil actualizada con éxito', {
+                    position: "top-right",
+                    autoClose: 3000,
+                });
+            }
+        } catch (error) {
+            console.error('Error uploading photo:', error);
+            const errorMessage = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+            throw new Error(`Error al subir la foto: ${errorMessage}`);
+        } finally {
+            setUploadingPhoto(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSaving(true);
         try {
-            const response = await api.patch('/api/user/pacientes/me/', formData);
+            const data = {
+                nombre: formData.nombre,
+                apellido: formData.apellido,
+                fecha_nacimiento: formData.fecha_nacimiento,
+                genero: formData.genero,
+                telefono: formData.telefono,
+            };
+
+            const response = await api.patch('/api/user/pacientes/me/', data);
+            
             if (response.status === 200) {
                 dispatch(fetchMe());
-                alert('Perfil actualizado con éxito.');
+                toast.success('✅ Perfil actualizado correctamente', {
+                    position: "top-right",
+                    autoClose: 3000,
+                });
             } else {
                 const errorData = response.data || {};
-                alert(`Error al actualizar: ${JSON.stringify(errorData)}`);
+                toast.error(`Error al actualizar: ${JSON.stringify(errorData)}`, {
+                    position: "top-right",
+                    autoClose: 5000,
+                });
             }
         } catch (error) {
             console.error('Error updating profile:', error);
             const errorMessage = error.response?.data ? JSON.stringify(error.response.data) : error.message;
-            alert(`Ocurrió un error al actualizar el perfil: ${errorMessage}`);
+            toast.error(`Ocurrió un error al actualizar el perfil: ${errorMessage}`, {
+                position: "top-right",
+                autoClose: 5000,
+            });
         } finally {
             setIsSaving(false);
         }
@@ -73,14 +124,20 @@ function ConfiguracionPaciente() {
             if (response.status === 200) {
                 dispatch(fetchMe());
                 setLinkingStatus('success');
-                alert(response.data.message || 'Cuenta de Google vinculada con éxito.');
+                toast.success(response.data.message || '🔗 Cuenta de Google vinculada con éxito', {
+                    position: "top-right",
+                    autoClose: 3000,
+                });
             }
         } catch (error) {
             console.error('Error linking Google account:', error);
             setLinkingStatus('failed');
             const errorMsg = error.response?.data?.error || error.message || 'Error al vincular cuenta de Google';
             setLinkingError(errorMsg);
-            alert(errorMsg);
+            toast.error(errorMsg, {
+                position: "top-right",
+                autoClose: 5000,
+            });
         }
     };
 
@@ -90,7 +147,10 @@ function ConfiguracionPaciente() {
             console.error("Google Sign-In Error during linking:", error);
             setLinkingStatus('failed');
             setLinkingError('Hubo un problema con la autenticación de Google.');
-            alert('Hubo un problema con la autenticación de Google.');
+            toast.error('Hubo un problema con la autenticación de Google', {
+                position: "top-right",
+                autoClose: 5000,
+            });
         }
     });
 
@@ -100,7 +160,10 @@ function ConfiguracionPaciente() {
             googleLogin();
         } catch (error) {
             console.error('Error al llamar googleLogin:', error);
-            alert('Error al iniciar el proceso de vinculación');
+            toast.error('Error al iniciar el proceso de vinculación', {
+                position: "top-right",
+                autoClose: 5000,
+            });
         }
     };
 
@@ -111,15 +174,24 @@ function ConfiguracionPaciente() {
             if (response.status === 200) {
                 googleLogout();
                 dispatch(fetchMe());
-                alert('Cuenta de Google desvinculada con éxito.');
+                toast.success('🔓 Cuenta de Google desvinculada con éxito', {
+                    position: "top-right",
+                    autoClose: 3000,
+                });
             } else {
                 const errorData = response.data || {};
-                alert(`Error al desvincular: ${JSON.stringify(errorData)}`);
+                toast.error(`Error al desvincular: ${JSON.stringify(errorData)}`, {
+                    position: "top-right",
+                    autoClose: 5000,
+                });
             }
         } catch (error) {
             console.error('Error during Google account disconnection:', error);
             const errorMessage = error.response?.data ? JSON.stringify(error.response.data) : error.message;
-            alert(`Ocurrió un error al intentar desvincular la cuenta: ${errorMessage}`);
+            toast.error(`Ocurrió un error al intentar desvincular la cuenta: ${errorMessage}`, {
+                position: "top-right",
+                autoClose: 5000,
+            });
         }
     };
 
@@ -127,6 +199,52 @@ function ConfiguracionPaciente() {
 
     return (
         <div className="space-y-8">
+            {/* Modal de Foto de Perfil */}
+            <FotoPerfilModal
+                isOpen={isPhotoModalOpen}
+                onClose={() => setIsPhotoModalOpen(false)}
+                onSave={handlePhotoSave}
+                currentPhoto={user?.paciente?.foto_perfil}
+                uploading={uploadingPhoto}
+            />
+
+            {/* Foto de Perfil */}
+            <div className="p-6 bg-white shadow-md rounded-lg">
+                <h2 className="text-2xl font-bold mb-4">Foto de Perfil</h2>
+                <div className="flex items-center space-x-6">
+                    {/* Preview de la foto */}
+                    <div className="relative">
+                        {user?.paciente?.foto_perfil ? (
+                            <img
+                                src={user.paciente.foto_perfil}
+                                alt="Foto de perfil"
+                                className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
+                            />
+                        ) : (
+                            <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
+                                <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Controles */}
+                    <div className="flex-1">
+                        <button
+                            type="button"
+                            onClick={() => setIsPhotoModalOpen(true)}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                        >
+                            {user?.paciente?.foto_perfil ? 'Cambiar foto' : 'Subir foto'}
+                        </button>
+                        <p className="text-sm text-gray-500 mt-2">
+                            JPG, PNG o GIF (máx. 5MB)
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             {/* Formulario de Información Personal */}
             <div className="p-6 bg-white shadow-md rounded-lg">
                 <h2 className="text-2xl font-bold mb-4">Información Personal</h2>

@@ -1,11 +1,11 @@
 import Navbar from "../../components/navigation/Navbar";
-import Layout from "../../hocs/layouts/Layout";
 import Footer from "../../components/navigation/Footer";
 import HeroSection from "../../components/landing/HeroSection";
 import ServicesSection from "../../components/landing/ServicesSection";
 import BenefitsSection from "../../components/landing/BenefitsSection";
 import TestimonialsSection from "../../components/landing/TestimonialsSection";
 import FAQSection from "../../components/landing/FAQSection";
+import NutricionistasSection from "../../components/landing/NutricionistasSection";
 import WhatsAppButton from "../../components/landing/WhatsAppButton";
 
 function Home() {
@@ -16,6 +16,7 @@ function Home() {
             <ServicesSection />
             <BenefitsSection />
             <TestimonialsSection />
+            <NutricionistasSection />
             <FAQSection />
             <Footer />
             <WhatsAppButton />

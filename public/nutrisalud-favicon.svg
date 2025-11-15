@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Hoja -->
+  <path d="M20 4C20 4 18 6 16 6C14 6 12 4 12 4C12 4 14 8 16 8C18 8 20 4 20 4Z" fill="#059669"/>
+  
+  <!-- Manzana -->
+  <circle cx="16" cy="18" r="11" fill="#10B981"/>
+  
+  <!-- Brillo -->
+  <ellipse cx="12" cy="14" rx="3" ry="4" fill="#34D399" opacity="0.5"/>
+</svg>

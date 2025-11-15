@@ -5,6 +5,8 @@ import store from './app/store';
 import AppRoutes from './Routes';
 import api from './api/client';
 import { fetchMe } from './features/auth/authSlice';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function AppContent() {
   const dispatch = useDispatch();
@@ -22,7 +24,23 @@ function AppContent() {
     }
   }, [access, user, dispatch]);
 
-  return <AppRoutes />;
+  return (
+    <>
+      <AppRoutes />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </>
+  );
 }
 
 function App() {

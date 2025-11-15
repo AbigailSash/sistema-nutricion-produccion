@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 from .models import (
     UserAccount, 
-    Nutricionista, Paciente, Especialidad, AsignacionNutricionistaPaciente
+    Nutricionista, Paciente, Administrador, Especialidad, AsignacionNutricionistaPaciente
 )
 from .models import Pregunta, Consulta, PlantillaConsulta, PlantillaPregunta
 
@@ -41,6 +41,12 @@ class PacienteAdmin(admin.ModelAdmin):
     list_display = ('user', 'nombre', 'apellido', 'fecha_nacimiento', 'genero')
     list_filter = ('genero',)
     search_fields = ('user__dni', 'user__email', 'nombre', 'apellido')
+
+@admin.register(Administrador)
+class AdministradorAdmin(admin.ModelAdmin):
+    list_display = ('user', 'nombre', 'apellido', 'telefono')
+    search_fields = ('user__dni', 'user__email', 'nombre', 'apellido')
+    readonly_fields = ('user',)
 
 admin.site.register(AsignacionNutricionistaPaciente)
 admin.site.register(Especialidad)

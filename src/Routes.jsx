@@ -62,8 +62,7 @@ export default function AppRoutes() {
     return (
         <Routes>
             {/* Rutas Públicas */}
-            <Route path="landing" element={<Home />} />
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/cambiar-clave" element={<ChangePassword />} />
             
