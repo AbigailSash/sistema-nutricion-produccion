@@ -2,7 +2,7 @@ import { LockClosedIcon } from '@heroicons/react/20/solid';
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, fetchMe, setTokens } from '../../../features/auth/authSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../../../api/client';
 import { useGoogleLogin } from '@react-oauth/google';
 import Logo from '../../../components/common/Logo';
@@ -110,6 +110,17 @@ function Login() {
         <div className="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-md space-y-8">
                 <div>
+                    <div className="mb-4">
+                        <Link
+                            to="/"
+                            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                        >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Volver al inicio
+                        </Link>
+                    </div>
                     <div className="flex flex-col items-center">
                         <Logo className="h-20 w-20" showText={false} />
                         <span className="mt-3 text-2xl font-bold text-green-600">NutriSalud</span>

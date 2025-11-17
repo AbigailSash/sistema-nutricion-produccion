@@ -1,15 +1,53 @@
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Logo from '../common/Logo';
 
 function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
+    const [darkMode, setDarkMode] = useState(() => {
+        // Cargar el modo oscuro guardado del localStorage
+        const saved = localStorage.getItem('darkMode');
+        return saved === 'true';
+    });
+
+    // Aplicar modo oscuro al cargar
+    useEffect(() => {
+        const saved = localStorage.getItem('darkMode');
+        const isDark = saved === 'true';
+        
+        if (isDark) {
+            document.documentElement.classList.add('dark-mode');
+            document.body.classList.add('dark-mode');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+            document.body.classList.remove('dark-mode');
+        }
+    }, []);
+    
+    // Actualizar cuando cambia el estado
+    useEffect(() => {
+        if (darkMode) {
+            document.documentElement.classList.add('dark-mode');
+            document.body.classList.add('dark-mode');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+            document.body.classList.remove('dark-mode');
+        }
+    }, [darkMode]);
 
     const toggleDarkMode = () => {
-        setDarkMode(!darkMode);
-        document.body.classList.toggle('dark-mode');
+        const newDarkMode = !darkMode;
+        setDarkMode(newDarkMode);
+        localStorage.setItem('darkMode', newDarkMode.toString());
+        
+        if (newDarkMode) {
+            document.documentElement.classList.add('dark-mode');
+            document.body.classList.add('dark-mode');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+            document.body.classList.remove('dark-mode');
+        }
     };
 
     return(
@@ -131,6 +169,17 @@ function Navbar() {
                             >
                                 Iniciar Sesión
                             </Link>
+                            {/* Dark mode toggle en móvil */}
+                            <button
+                                onClick={toggleDarkMode}
+                                className="flex items-center justify-center w-full px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md transition-colors mt-4 border border-gray-300"
+                                aria-label="Toggle dark mode"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                                </svg>
+                                {darkMode ? 'Modo Claro' : 'Modo Oscuro'}
+                            </button>
                         </div>
                     </div>
                 )}

@@ -16,6 +16,8 @@ from .views import (
     ConsultasPacienteListView,
     PacientesNutricionistaListView,
     PacienteDetailView,
+    PacienteDesasignarView,
+    PacienteCreateView,
     PreguntaPersonalizadaViewSet,  # <- ViewSet para banco personalizado
     custom_disconnect,
     link_google_account,
@@ -69,7 +71,9 @@ urlpatterns = [
     path("google-login/", google_oauth_login, name="google_oauth_login"),
     path("link-google/", link_google_account, name="link_google_account"),
     path("disconnect/<str:backend>/", custom_disconnect, name="custom_disconnect"),
-    path("pacientes/<int:id>/", PacienteDetailView.as_view()),
+    path("pacientes/crear/", PacienteCreateView.as_view()),  # POST para crear solo paciente
+    path("pacientes/<int:id>/desasignar/", PacienteDesasignarView.as_view()),
+    path("pacientes/<int:id>/", PacienteDetailView.as_view()),  # GET para detalles, PATCH para actualizar
     path("pacientes/me/", PacienteProfileView.as_view()),  # Agregar endpoint para perfil del paciente
     path("pacientes/", PacientesNutricionistaListView.as_view()),
     path("mis-planes/", PlanesPacienteListView.as_view()),  # Endpoint para pacientes ver sus planes

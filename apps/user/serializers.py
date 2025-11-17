@@ -660,6 +660,92 @@ class PacienteDetailSerializer(serializers.ModelSerializer):
 # Consultas
 # ---------------------------------------------------------------------
 
+class PacienteCreateSerializer(serializers.Serializer):
+    """Serializer para crear solo un paciente sin consulta"""
+    dni = serializers.CharField(max_length=10)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    nombre = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    apellido = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True, min_length=6, required=False, allow_blank=True)
+    telefono = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    fecha_nacimiento = serializers.DateField(required=False)
+    genero = serializers.ChoiceField(choices=Paciente._meta.get_field("genero").choices, required=False)
+
+    @transaction.atomic
+    def create(self, validated):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        nutri = getattr(user, "nutricionista", None)
+        if nutri is None:
+            raise serializers.ValidationError({"detail": "Solo un nutricionista puede crear pacientes."})
+
+        # Reutilizar la lógica del ConsultaInicialSerializer
+        # Copiamos el método directamente aquí
+        dni = validated["dni"].strip()
+        user_obj = User.objects.filter(dni=dni).first()
+        creado = False
+        password_inicial = None
+
+        if user_obj is None:
+            pwd = validated.get("password")
+            if not pwd:
+                pwd = _gen_password_facil(dni, validated.get("fecha_nacimiento", None))
+            user_obj = User.objects.create_user(
+                dni=dni,
+                email=validated.get("email") or "",
+                password=pwd,
+                is_staff=False,
+            )
+            if hasattr(user_obj, "must_change_password"):
+                user_obj.must_change_password = True
+                user_obj.save(update_fields=["must_change_password"])
+            creado = True
+            password_inicial = pwd
+        else:
+            changed = False
+            new_email = validated.get("email")
+            if new_email not in (None, "") and getattr(user_obj, 'email') != new_email:
+                 setattr(user_obj, 'email', new_email)
+                 changed = True
+            if changed:
+                user_obj.save()
+
+        paciente = getattr(user_obj, "paciente", None)
+        if paciente is None:
+            paciente = Paciente.objects.create(
+                user=user_obj,
+                nombre=validated.get("nombre") or "",
+                apellido=validated.get("apellido") or "",
+                telefono=validated.get("telefono") or "",
+                fecha_nacimiento=validated.get("fecha_nacimiento"),
+                genero=validated.get("genero", Paciente._meta.get_field("genero").default),
+            )
+        else:
+            updated = False
+            if validated.get("nombre") and paciente.nombre != validated["nombre"]:
+                paciente.nombre = validated["nombre"]; updated = True
+            if validated.get("apellido") and paciente.apellido != validated["apellido"]:
+                paciente.apellido = validated["apellido"]; updated = True
+            if updated:
+                paciente.save(update_fields=["nombre", "apellido"])
+
+        AsignacionNutricionistaPaciente.objects.get_or_create(
+            nutricionista=nutri, paciente=paciente
+        )
+
+        out = {
+            "paciente_id": paciente.id,
+            "nuevo_paciente": creado,
+        }
+        if creado and password_inicial:
+            out["password_inicial"] = password_inicial
+        return out
+
+    def to_representation(self, instance):
+        return instance
+
+
 class ConsultaInicialSerializer(serializers.Serializer):
     # datos esenciales para autogenerar paciente
     dni = serializers.CharField(max_length=10)

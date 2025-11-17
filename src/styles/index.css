@@ -1,2 +1,99 @@
 @import "tailwindcss";
 
+/* Modo Oscuro - Solo fondo base */
+html.dark-mode {
+    background-color: #1a1a1a;
+}
+
+body.dark-mode,
+html.dark-mode > body {
+    background-color: #1a1a1a;
+}
+
+/* Navbar en modo oscuro */
+html.dark-mode nav[style*="e8ddf5"],
+html.dark-mode nav[style*="#e8ddf5"] {
+    background-color: #2d2d2d !important;
+    border-bottom: 1px solid #404040;
+}
+
+html.dark-mode nav a:not([style*="color"]),
+html.dark-mode nav button:not([style*="color"]) {
+    color: #e5e5e5 !important;
+}
+
+html.dark-mode nav a:hover,
+html.dark-mode nav button:hover {
+    color: #10B981 !important;
+}
+
+/* Inputs y formularios en modo oscuro - Solo inputs sin estilos inline */
+html.dark-mode input:not([style]),
+html.dark-mode textarea:not([style]),
+html.dark-mode select:not([style]) {
+    background-color: #2d2d2d;
+    color: #e5e5e5;
+    border-color: #404040;
+}
+
+html.dark-mode input:focus:not([style]),
+html.dark-mode textarea:focus:not([style]),
+html.dark-mode select:focus:not([style]) {
+    background-color: #333333;
+    border-color: #10B981;
+}
+
+html.dark-mode input::placeholder,
+html.dark-mode textarea::placeholder {
+    color: #888888;
+}
+
+/* Cards y contenedores - Solo clases de Tailwind sin estilos inline */
+html.dark-mode .bg-white:not([style]) {
+    background-color: #2d2d2d !important;
+}
+
+html.dark-mode .bg-gray-50:not([style]),
+html.dark-mode .bg-gray-100:not([style]) {
+    background-color: #252525 !important;
+}
+
+html.dark-mode .border-gray-200:not([style]),
+html.dark-mode .border-gray-300:not([style]) {
+    border-color: #404040 !important;
+}
+
+/* Texto - Solo clases de Tailwind sin estilos inline ni colores específicos */
+html.dark-mode .text-gray-700:not([style]):not(.text-green-600):not(.text-indigo-600):not(.text-white),
+html.dark-mode .text-gray-900:not([style]):not(.text-green-600):not(.text-indigo-600):not(.text-white) {
+    color: #e5e5e5 !important;
+}
+
+html.dark-mode .text-gray-600:not([style]):not(.text-green-600):not(.text-indigo-600):not(.text-white) {
+    color: #a0a0a0 !important;
+}
+
+html.dark-mode .text-gray-500:not([style]) {
+    color: #888888 !important;
+}
+
+/* Tablas en modo oscuro */
+html.dark-mode table:not([style]) {
+    color: #e5e5e5;
+}
+
+html.dark-mode th:not([style]),
+html.dark-mode td:not([style]) {
+    border-color: #404040;
+}
+
+html.dark-mode tr:hover:not([style]) {
+    background-color: #2d2d2d;
+}
+
+/* NO aplicar a secciones con estilos inline de background */
+html.dark-mode section[style*="background"],
+html.dark-mode div[style*="background"] {
+    /* Respetar el background inline original */
+}
+

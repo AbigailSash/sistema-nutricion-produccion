@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchPreguntas } from "../../../features/preguntas/preguntasSlice";
 import { crearConsultaInicial, clearLastCreated } from "../../../features/consultas/consultasSlice";
 import { useGetPlantillasQuery } from "../../../features/plantillas/plantillasSlice";
+import { crearPaciente } from "../../../features/nutri/nutriSlice";
+import { toast } from "react-toastify";
 
 import PacienteForm from "../../../components/consultas/PacienteForm";
 import PreguntasForm from "../../../components/consultas/PreguntasForm";
@@ -12,6 +14,7 @@ export default function ConsultaInicial() {
     const preguntasRaw = useSelector((s) => s.preguntas.byScope.inicial);
     const pqStatus = useSelector((s) => s.preguntas.status);
     const { creating, error, lastCreated } = useSelector((s) => s.consultas);
+    const [savingPaciente, setSavingPaciente] = useState(false);
 
     // Cargar plantillas disponibles
     const { data: plantillas, isLoading: loadingPlantillas } = useGetPlantillasQuery({
@@ -224,7 +227,13 @@ export default function ConsultaInicial() {
             }));
 
         const payload = {
-            ...pac,
+            dni: pac.dni,
+            email: pac.email,
+            nombre: pac.first_name || "", // Mapear first_name a nombre
+            apellido: pac.last_name || "", // Mapear last_name a apellido
+            telefono: pac.telefono,
+            fecha_nacimiento: pac.fecha_nacimiento,
+            genero: pac.genero,
             respuestas,
             notas: "",
             // Si se usó plantilla, enviar el ID y el snapshot ya generado
@@ -243,6 +252,39 @@ export default function ConsultaInicial() {
         };
 
         await dispatch(crearConsultaInicial(payload));
+    };
+
+    const handleSavePaciente = async () => {
+        // Validar DNI mínimo
+        if (!pac.dni || pac.dni.trim() === "") {
+            toast.error("❌ El DNI es obligatorio", {
+                position: "top-right",
+                autoClose: 3000,
+            });
+            return;
+        }
+
+        setSavingPaciente(true);
+        try {
+            const result = await dispatch(crearPaciente(pac)).unwrap();
+            toast.success(
+                result.nuevo_paciente 
+                    ? `✅ Paciente creado correctamente${result.password_inicial ? `. Contraseña: ${result.password_inicial}` : ''}`
+                    : "✅ Paciente actualizado correctamente",
+                {
+                    position: "top-right",
+                    autoClose: 5000,
+                }
+            );
+        } catch (error) {
+            const errorMessage = error?.detail || error?.message || "Error al guardar paciente";
+            toast.error(`❌ ${errorMessage}`, {
+                position: "top-right",
+                autoClose: 5000,
+            });
+        } finally {
+            setSavingPaciente(false);
+        }
     };
 
     const fieldError = (name) =>
@@ -282,9 +324,22 @@ export default function ConsultaInicial() {
                     {/* SECCIÓN 1: DATOS PERSONALES DEL PACIENTE */}
                     {/* ============================================ */}
                     <div className="bg-white rounded border border-gray-200 p-5">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                            Datos Personales del Paciente
-                        </h2>
+                        <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                Datos Personales del Paciente
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={handleSavePaciente}
+                                disabled={savingPaciente || !pac.dni || pac.dni.trim() === ""}
+                                className="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                </svg>
+                                {savingPaciente ? "Guardando..." : "Guardar Paciente"}
+                            </button>
+                        </div>
                         <PacienteForm pac={pac} onChange={onPac} fieldError={fieldError} />
                     </div>
 
@@ -424,14 +479,14 @@ export default function ConsultaInicial() {
                                 setValores({});
                                 setObs({});
                             }}
-                            className="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                             Limpiar
                         </button>
                         <button
                             type="submit"
                             disabled={creating === "loading"}
-                            className="px-6 py-2 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-6 py-2 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             {creating === "loading" ? "Guardando..." : "Guardar Consulta"}
                         </button>

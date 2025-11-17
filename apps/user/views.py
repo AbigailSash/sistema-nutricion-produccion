@@ -274,7 +274,8 @@ class PacientesNutricionistaListView(APIView):
             return Response({"detail": "Solo nutricionistas pueden ver pacientes"}, status=403)
 
         asignaciones = AsignacionNutricionistaPaciente.objects.filter(
-            nutricionista=nutri
+            nutricionista=nutri,
+            activo=True  # Solo mostrar pacientes activamente asignados
         ).select_related("paciente")
 
         pacientes = [a.paciente for a in asignaciones]
@@ -283,10 +284,97 @@ class PacientesNutricionistaListView(APIView):
 
 
 
-class PacienteDetailView(RetrieveAPIView):
+class PacienteDetailView(generics.RetrieveUpdateAPIView):
+    """GET, PATCH /api/user/pacientes/{id}/ - Obtener detalles y actualizar pacientes"""
     queryset = Paciente.objects.all()
-    serializer_class = PacienteDetailSerializer
+    permission_classes = [IsAuthenticated]
     lookup_field = "id"
+
+    def get_serializer_class(self):
+        if self.request.method == 'PATCH':
+            return PacienteUpdateSerializer
+        return PacienteDetailSerializer
+
+    def get_object(self):
+        """Solo permitir ver/editar pacientes asignados al nutricionista"""
+        paciente = super().get_object()
+        nutri = getattr(self.request.user, "nutricionista", None)
+        
+        # Si es el propio paciente, permitir acceso
+        if hasattr(self.request.user, 'paciente') and self.request.user.paciente.id == paciente.id:
+            return paciente
+        
+        # Si es nutricionista, verificar asignación
+        if nutri:
+            asignacion = AsignacionNutricionistaPaciente.objects.filter(
+                nutricionista=nutri,
+                paciente=paciente,
+                activo=True
+            ).first()
+            
+            if asignacion:
+                return paciente
+        
+        raise PermissionDenied("No tienes permiso para acceder a este paciente")
+
+
+class PacienteCreateView(APIView):
+    """POST /api/user/pacientes/crear/ - Crear solo el paciente sin consulta"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .serializers import PacienteCreateSerializer
+        ser = PacienteCreateSerializer(data=request.data, context={"request": request})
+        if ser.is_valid():
+            data = ser.save()
+            return Response(data, status=status.HTTP_201_CREATED)
+        return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PacienteDesasignarView(APIView):
+    """DELETE /api/user/pacientes/{id}/desasignar/ - Marca la asignación como inactiva sin eliminar al paciente"""
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        nutri = getattr(request.user, "nutricionista", None)
+        
+        if nutri is None:
+            return Response(
+                {"detail": "Solo nutricionistas pueden desasignar pacientes"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            paciente = Paciente.objects.get(id=id)
+        except Paciente.DoesNotExist:
+            return Response(
+                {"detail": "Paciente no encontrado"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Buscar asignación activa
+        asignacion = AsignacionNutricionistaPaciente.objects.filter(
+            nutricionista=nutri,
+            paciente=paciente,
+            activo=True
+        ).first()
+        
+        if not asignacion:
+            return Response(
+                {"detail": "Este paciente no está asignado a ti"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Marcar como inactiva en lugar de eliminar
+        from django.utils import timezone
+        asignacion.activo = False
+        asignacion.fecha_hasta = timezone.now().date()
+        asignacion.save()
+        
+        return Response(
+            {"detail": "Paciente desasignado correctamente. El paciente permanece en la base de datos."},
+            status=status.HTTP_200_OK
+        )
 
 
 # --- API: preguntas personalizadas ---
